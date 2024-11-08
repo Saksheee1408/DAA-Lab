@@ -50,7 +50,7 @@ void buildHuffmanTree(const string& text) {
     }
 
     // Step 2: Create a priority queue and push all characters as leaf nodes
-    priority_queue<Node*, std::vector<Node*>, Compare> pq;
+    priority_queue<Node*,vector<Node*>, Compare> pq;
     for (pair<char, int> p : frequency) {
         pq.push(createNode(p.first, p.second));
     }

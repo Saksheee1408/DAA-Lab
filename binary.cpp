@@ -30,6 +30,7 @@ class binary{
                     arr[j]=temp;
                 }
             }
+            
         }
     }
    int binary_search()

@@ -1,97 +1,108 @@
 #include <iostream>
-#include <algorithm>
 using namespace std;
 
-struct Item {
-    int weight;
-    int value;
-};
+const int MAX_ITEMS = 20;  // Maximum number of items we can handle
 
-struct Node {
-    int level;
-    int profit;
-    int weight;
-    float bound;
-};
+// Global variables
+int bestSolution[MAX_ITEMS];  // To store best solution found
+int maxValue = 0;            // Maximum value found so far
 
-float bound(Node u, int n, int W, Item items[]) {
-    if (u.weight >= W) return 0;
-    float profit_bound = u.profit;
-    int j = u.level + 1;
-    int total_weight = u.weight;
-
-    while ((j < n) && (total_weight + items[j].weight <= W)) {
-        total_weight += items[j].weight;
-        profit_bound += items[j].value;
-        j++;
-    }
-
-    if (j < n) {
-        profit_bound += (W - total_weight) * (float(items[j].value) / items[j].weight);
-    }
-
-    return profit_bound;
-}
-
-int knapsack(Item items[], int n, int W) {
-    Node nodes[100];
-    int numNodes = 0;
+// Calculate bound for remaining items
+int calculateBound(int values[], int weights[], int currentValue, 
+                  int currentWeight, int capacity, int index, int n) {
+    int boundValue = currentValue;
+    int boundWeight = currentWeight;
     
-    sort(items, items + n, [](Item a, Item b) {
-        return (float)a.value / a.weight > (float)b.value / b.weight;
-    });
-
-    Node u;
-    u.level = -1;
-    u.profit = u.weight = 0;
-    u.bound = bound(u, n, W, items);
-
-    nodes[numNodes++] = u;
-    int maxProfit = 0;
-
-    while (numNodes > 0) {
-        Node currentNode = nodes[--numNodes];
-
-        if (currentNode.bound > maxProfit) {
-            Node v;
-            v.level = currentNode.level + 1;
-            v.weight = currentNode.weight + items[v.level].weight;
-            v.profit = currentNode.profit + items[v.level].value;
-
-            if (v.weight <= W && v.profit > maxProfit)
-                maxProfit = v.profit;
-
-            v.bound = bound(v, n, W, items);
-            if (v.bound > maxProfit && v.level < n)
-                nodes[numNodes++] = v;
-
-            v.weight = currentNode.weight;
-            v.profit = currentNode.profit;
-            v.bound = bound(v, n, W, items);
-            if (v.bound > maxProfit && v.level < n)
-                nodes[numNodes++] = v;
+    // Try to add remaining items
+    for(int i = index; i < n; i++) {
+        if(boundWeight + weights[i] <= capacity) {
+            boundValue += values[i];
+            boundWeight += weights[i];
         }
     }
-    return maxProfit;
+    
+    return boundValue;
+}
+
+// Recursive function to explore possibilities
+void explore(int values[], int weights[], int currentSolution[], 
+            int capacity, int currentValue, int currentWeight, 
+            int index, int n) {
+    // If we've reached the end
+    if(index == n) {
+        if(currentValue > maxValue) {
+            maxValue = currentValue;
+            // Save current solution
+            for(int i = 0; i < n; i++) {
+                bestSolution[i] = currentSolution[i];
+            }
+        }
+        return;
+    }
+    
+    // Calculate bound
+    int bound = calculateBound(values, weights, currentValue, 
+                             currentWeight, capacity, index, n);
+    
+    if(bound <= maxValue) {
+        return;  // Skip if not promising
+    }
+    
+    // Don't take current item
+    explore(values, weights, currentSolution, capacity, 
+           currentValue, currentWeight, index + 1, n);
+    
+    // Take current item if possible
+    if(currentWeight + weights[index] <= capacity) {
+        currentSolution[index] = 1;
+        explore(values, weights, currentSolution, capacity,
+               currentValue + values[index], 
+               currentWeight + weights[index], 
+               index + 1, n);
+        currentSolution[index] = 0;  // Backtrack
+    }
+}
+
+// Main function to solve knapsack
+void solveKnapsack(int values[], int weights[], int n, int capacity) {
+    int currentSolution[MAX_ITEMS] = {0};  // Start with nothing selected
+    maxValue = 0;  // Reset maximum value
+    
+    // Initialize bestSolution array
+    for(int i = 0; i < n; i++) {
+        bestSolution[i] = 0;
+    }
+    
+    // Start exploring solutions
+    explore(values, weights, currentSolution, capacity, 0, 0, 0, n);
 }
 
 int main() {
-    int n, W;
-
-    cout << "Enter number of items: ";
-    cin >> n;
-
-    Item items[100];
-    cout << "Enter weight and value of each item:\n";
-    for (int i = 0; i < n; i++) {
-        cin >> items[i].weight >> items[i].value;
+    // Example problem
+    int values[] = {60, 100, 120};    // Values of items
+    int weights[] = {10, 20, 30};     // Weights of items
+    int capacity = 50;                // Knapsack capacity
+    int n = 3;                        // Number of items
+    
+    // Solve the knapsack problem
+    solveKnapsack(values, weights, n, capacity);
+    
+    // Print results
+    cout << "Maximum value: " << maxValue << endl;
+    
+    cout << "\nSelected items (1 = selected, 0 = not selected):\n";
+    for(int i = 0; i < n; i++) {
+        cout << "Item " << (i+1) << ": " << bestSolution[i] << endl;
     }
-
-    cout << "Enter the maximum capacity of the knapsack: ";
-    cin >> W;
-
-    int maxProfit = knapsack(items, n, W);
-    cout << "Maximum profit in knapsack = " << maxProfit << endl;
-
+    
+    cout << "\nDetailed solution:\n";
+    for(int i = 0; i < n; i++) {
+        if(bestSolution[i] == 1) {
+            cout << "Take item " << (i+1) 
+                 << " with value " << values[i] 
+                 << " and weight " << weights[i] << endl;
+        }
+    }
+    
     return 0;
-} 
+}

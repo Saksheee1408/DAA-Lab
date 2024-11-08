@@ -7,13 +7,16 @@ using namespace std;
 class Graph {
 public:
     int V; // Number of vertices
-    int** adj; // Adjacency matrix
+    int adj[10][10]; // Adjacency matrix
 
     Graph(int V) {
         this->V = V;
-        adj = new int*[V];
+       
         for (int i = 0; i < V; i++) {
-            adj[i] = new int[V]{0}; // Initialize with 0
+           for(int j=0;j<V;j++)
+           {
+            adj[i][j]=0;
+           }
         }
     }
 
@@ -74,7 +77,8 @@ int main() {
     g.addEdge(1, 2);
    
 
-    string colors[3] = {"Red", "Green", "Blue"}; // Define colors
+    
+     // Define colors
     g.generateColorings(colors); // Generate colorings
 
     return 0;
